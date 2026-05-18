@@ -12,6 +12,8 @@ The question is not only whether the agent can respond. The question is whether 
 | User interruption cancels active speech | Barge in stops active agent speech and records interruption behavior | Real calls are messy. Users interrupt, correct, and redirect the agent |
 | Partial transcript does not trigger response | Incomplete speech updates do not prematurely trigger agent output | Prevents the agent from responding to unstable transcript fragments |
 | Multiple partials wait for final transcript | Several partial transcripts can arrive before the final turn produces speech | Real STT streams often revise partial text before finalizing intent |
+| STT provider failure creates degraded fallback | A speech to text provider failure moves the session into degraded state and emits a safe fallback event | Provider outages should be visible and should not silently look like user silence |
+| TTS provider failure creates degraded fallback | A text to speech provider failure records the provider failure after agent response creation and emits a safe fallback event | Voice systems need an explicit recovery path when speech output fails |
 | Session end records ended state | Ending a session emits an ended state and audit event | Operators need clean call termination and traceability |
 | Health endpoint returns runtime status | The service exposes a simple runtime health check | Operators need a fast signal before routing traffic or test calls |
 | Eval endpoint returns structured results | Runtime evals are accessible through the API | Teams need a lightweight way to verify behavior outside the test runner |
@@ -26,14 +28,14 @@ The question is not only whether the agent can respond. The question is whether 
 6. Eval output is not machine readable.
 7. Audit events are missing for key turn transitions.
 8. Multiple partial transcripts produce duplicate agent responses.
-9. Ended sessions do not produce a clear terminal state.
+9. Provider failure disappears without a degraded state.
+10. Ended sessions do not produce a clear terminal state.
 
 ## Additional evals to add next
 
 1. Silence timeout creates a safe fallback state.
 2. Repeated user correction updates intent instead of creating duplicate responses.
-3. Provider adapter failure returns a visible degraded state.
-4. Transfer request creates an explicit handoff event.
+3. Transfer request creates an explicit handoff event.
 5. Transcript logging preserves partial and final turn history.
 6. Latency budget warning fires when a turn exceeds the configured threshold.
 7. Unsupported intent produces a safe clarification response.
@@ -42,6 +44,6 @@ The question is not only whether the agent can respond. The question is whether 
 
 For realtime voice AI, I would not only eval whether the model gives a good answer. I would eval the runtime behavior around the conversation.
 
-The key checks are partial transcript handling, final transcript boundaries, interruption behavior, text to speech cancellation, transfer fallback, transcript visibility, provider failure, and latency. If those are not tested, the agent may sound good in a demo but fail in real calls.
+The key checks are partial transcript handling, final transcript boundaries, interruption behavior, text to speech cancellation, provider failure fallback, transcript visibility, and latency. If those are not tested, the agent may sound good in a demo but fail in real calls.
 
 This repo is intentionally small, but the eval shape is the important part: define the runtime contract, test the risky transitions, and make the result visible to operators.

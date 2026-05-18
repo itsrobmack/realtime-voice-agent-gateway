@@ -38,3 +38,19 @@ export class ChunkedTextToSpeech implements TextToSpeechAdapter {
     }
   }
 }
+
+export class FailingSpeechToText implements SpeechToTextAdapter {
+  readonly name = "failing-stt";
+
+  async acceptFrame(_frame: AudioFrame): Promise<TranscriptEvent[]> {
+    throw new Error("stt provider unavailable");
+  }
+}
+
+export class FailingTextToSpeech implements TextToSpeechAdapter {
+  readonly name = "failing-tts";
+
+  async *synthesize(_input: { text: string; sessionId: string }): AsyncIterable<Uint8Array> {
+    throw new Error("tts provider unavailable");
+  }
+}

@@ -1,4 +1,4 @@
-import { ChunkedTextToSpeech, ScriptedSpeechToText, StaticAgentReasoner } from "./adapters";
+import { ChunkedTextToSpeech, FailingSpeechToText, FailingTextToSpeech, ScriptedSpeechToText, StaticAgentReasoner } from "./adapters";
 import { RealtimeVoiceGateway } from "./gateway";
 import type { VoiceAuditEventType, VoiceGatewaySnapshot } from "./types";
 
@@ -118,6 +118,47 @@ export const voiceEvalCases: VoiceEvalCase[] = [
       await gateway.receiveAudio(frame(1, 8));
       await gateway.receiveAudio(frame(2, 14));
       await gateway.receiveAudio(frame(3, 28));
+      return gateway.snapshot();
+    }
+  },
+
+  {
+    name: "stt provider failure creates degraded fallback",
+    expectedState: "degraded",
+    expectedAuditEvents: ["session.created", "audio.received", "provider.failed", "fallback.created"],
+    run: async () => {
+      const gateway = new RealtimeVoiceGateway({
+        sessionId: "eval-stt-failure",
+        stt: new FailingSpeechToText(),
+        reasoner: new StaticAgentReasoner(),
+        tts: new ChunkedTextToSpeech(1)
+      });
+
+      await gateway.receiveAudio(frame(1, 10));
+      return gateway.snapshot();
+    }
+  },
+  {
+    name: "tts provider failure creates degraded fallback",
+    expectedState: "degraded",
+    expectedAuditEvents: [
+      "session.created",
+      "audio.received",
+      "transcript.final",
+      "agent.response.created",
+      "speech.started",
+      "provider.failed",
+      "fallback.created"
+    ],
+    run: async () => {
+      const gateway = new RealtimeVoiceGateway({
+        sessionId: "eval-tts-failure",
+        stt: new ScriptedSpeechToText({ 1: [{ text: "Can you transfer me?", isFinal: true, atMs: 20 }] }),
+        reasoner: new StaticAgentReasoner(),
+        tts: new FailingTextToSpeech()
+      });
+
+      await gateway.receiveAudio(frame(1, 20));
       return gateway.snapshot();
     }
   },

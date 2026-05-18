@@ -49,10 +49,14 @@ export class RealtimeVoiceGateway {
       this.interruptSpeech(frame.atMs);
     }
 
-    const transcripts = await this.options.stt.acceptFrame(frame);
+    try {
+      const transcripts = await this.options.stt.acceptFrame(frame);
 
-    for (const transcript of transcripts) {
-      await this.handleTranscript(transcript);
+      for (const transcript of transcripts) {
+        await this.handleTranscript(transcript);
+      }
+    } catch (error) {
+      this.markProviderFailure("stt", frame.atMs, error);
     }
   }
 
@@ -85,10 +89,14 @@ export class RealtimeVoiceGateway {
     }
 
     this.state = "thinking";
-    const reply = await this.options.reasoner.respond({ transcript: transcript.text, sessionId: this.options.sessionId });
-    this.lastReply = reply;
-    this.record("agent.response.created", transcript.atMs + 1, { intent: reply.intent, textLength: reply.text.length });
-    await this.speak(reply, transcript.atMs + 2);
+    try {
+      const reply = await this.options.reasoner.respond({ transcript: transcript.text, sessionId: this.options.sessionId });
+      this.lastReply = reply;
+      this.record("agent.response.created", transcript.atMs + 1, { intent: reply.intent, textLength: reply.text.length });
+      await this.speak(reply, transcript.atMs + 2);
+    } catch (error) {
+      this.markProviderFailure("reasoner", transcript.atMs + 1, error);
+    }
   }
 
   private async speak(reply: AgentReply, startedAtMs: number): Promise<void> {
@@ -98,14 +106,19 @@ export class RealtimeVoiceGateway {
 
     let chunkIndex = 0;
 
-    for await (const chunk of this.options.tts.synthesize({ text: reply.text, sessionId: this.options.sessionId })) {
-      if (this.state !== "speaking") {
-        return;
-      }
+    try {
+      for await (const chunk of this.options.tts.synthesize({ text: reply.text, sessionId: this.options.sessionId })) {
+        if (this.state !== "speaking") {
+          return;
+        }
 
-      this.speechChunks += 1;
-      this.record("tts.chunk.created", startedAtMs + chunkIndex + 1, { chunkIndex, bytes: chunk.byteLength });
-      chunkIndex += 1;
+        this.speechChunks += 1;
+        this.record("tts.chunk.created", startedAtMs + chunkIndex + 1, { chunkIndex, bytes: chunk.byteLength });
+        chunkIndex += 1;
+      }
+    } catch (error) {
+      this.markProviderFailure("tts", startedAtMs + chunkIndex + 1, error);
+      return;
     }
 
     if (this.state === "speaking") {
@@ -126,6 +139,16 @@ export class RealtimeVoiceGateway {
       previousSpeechAgeMs: this.speakingStartedAtMs === undefined ? 0 : Math.max(0, atMs - this.speakingStartedAtMs)
     });
     this.speakingStartedAtMs = undefined;
+  }
+
+  private markProviderFailure(provider: "stt" | "reasoner" | "tts", atMs: number, error: unknown): void {
+    this.state = "degraded";
+    this.speakingStartedAtMs = undefined;
+    this.record("provider.failed", atMs, {
+      provider,
+      message: error instanceof Error ? error.message : "unknown provider failure"
+    });
+    this.record("fallback.created", atMs + 1, { provider, action: "safe_handoff" });
   }
 
   private record(type: VoiceAuditEventType, atMs: number, detail?: VoiceAuditEvent["detail"]): void {

@@ -1,4 +1,4 @@
-export type VoiceSessionState = "idle" | "listening" | "thinking" | "speaking" | "ended";
+export type VoiceSessionState = "idle" | "listening" | "thinking" | "speaking" | "degraded" | "ended";
 
 export type TranscriptEvent = {
   text: string;
@@ -22,6 +22,8 @@ export type VoiceAuditEventType =
   | "speech.started"
   | "speech.interrupted"
   | "speech.completed"
+  | "provider.failed"
+  | "fallback.created"
   | "session.ended";
 
 export type VoiceAuditEvent = {
