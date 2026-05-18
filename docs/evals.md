@@ -11,6 +11,8 @@ The question is not only whether the agent can respond. The question is whether 
 | Final transcript creates response and speech | A completed user turn advances through transcript, agent response, and text to speech output | Voice systems need clear turn boundaries before downstream actions can be trusted |
 | User interruption cancels active speech | Barge in stops active agent speech and records interruption behavior | Real calls are messy. Users interrupt, correct, and redirect the agent |
 | Partial transcript does not trigger response | Incomplete speech updates do not prematurely trigger agent output | Prevents the agent from responding to unstable transcript fragments |
+| Multiple partials wait for final transcript | Several partial transcripts can arrive before the final turn produces speech | Real STT streams often revise partial text before finalizing intent |
+| Session end records ended state | Ending a session emits an ended state and audit event | Operators need clean call termination and traceability |
 | Health endpoint returns runtime status | The service exposes a simple runtime health check | Operators need a fast signal before routing traffic or test calls |
 | Eval endpoint returns structured results | Runtime evals are accessible through the API | Teams need a lightweight way to verify behavior outside the test runner |
 
@@ -23,6 +25,8 @@ The question is not only whether the agent can respond. The question is whether 
 5. Runtime health is unavailable.
 6. Eval output is not machine readable.
 7. Audit events are missing for key turn transitions.
+8. Multiple partial transcripts produce duplicate agent responses.
+9. Ended sessions do not produce a clear terminal state.
 
 ## Additional evals to add next
 

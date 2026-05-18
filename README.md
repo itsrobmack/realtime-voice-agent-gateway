@@ -40,7 +40,7 @@ curl http://localhost:8788/evals
 
 ## Eval coverage
 
-The eval suite validates realtime voice runtime behavior: final transcript handling, streamed speech, user interruption, partial transcript boundaries, API health, and structured eval output.
+The eval suite validates realtime voice runtime behavior: final transcript handling, streamed speech, user interruption, partial transcript boundaries, multi-partial finalization, session ending, API health, and structured eval output.
 
 See [`docs/evals.md`](docs/evals.md) for the eval matrix, failure cases, and interview framing.
 

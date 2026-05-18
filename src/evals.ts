@@ -89,6 +89,52 @@ export const voiceEvalCases: VoiceEvalCase[] = [
       await gateway.receiveAudio(frame(1, 8));
       return gateway.snapshot();
     }
+  },
+  {
+    name: "multiple partials wait for final transcript",
+    expectedState: "listening",
+    expectedAuditEvents: [
+      "session.created",
+      "audio.received",
+      "transcript.partial",
+      "transcript.final",
+      "agent.response.created",
+      "speech.started",
+      "speech.completed"
+    ],
+    minimumSpeechChunks: 2,
+    run: async () => {
+      const gateway = new RealtimeVoiceGateway({
+        sessionId: "eval-partials-then-final",
+        stt: new ScriptedSpeechToText({
+          1: [{ text: "I need", isFinal: false, atMs: 8 }],
+          2: [{ text: "I need to update", isFinal: false, atMs: 14 }],
+          3: [{ text: "I need to update my appointment", isFinal: true, atMs: 28 }]
+        }),
+        reasoner: new StaticAgentReasoner(),
+        tts: new ChunkedTextToSpeech(2)
+      });
+
+      await gateway.receiveAudio(frame(1, 8));
+      await gateway.receiveAudio(frame(2, 14));
+      await gateway.receiveAudio(frame(3, 28));
+      return gateway.snapshot();
+    }
+  },
+  {
+    name: "session end records ended state",
+    expectedState: "ended",
+    expectedAuditEvents: ["session.created", "session.ended"],
+    run: async () => {
+      const gateway = new RealtimeVoiceGateway({
+        sessionId: "eval-ended",
+        stt: new ScriptedSpeechToText({}),
+        reasoner: new StaticAgentReasoner(),
+        tts: new ChunkedTextToSpeech(1)
+      });
+
+      return gateway.end(100);
+    }
   }
 ];
 
