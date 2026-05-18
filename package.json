@@ -1,0 +1,29 @@
+{
+  "name": "realtime-voice-agent-gateway",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "A small realtime voice agent gateway skeleton for streaming turns, interruption handling, provider adapters, audit events, and runtime evals.",
+  "scripts": {
+    "start": "bun src/server.ts",
+    "test": "bun test",
+    "test:evals": "bun test test/evals.test.ts",
+    "demo": "bun src/demo.ts"
+  },
+  "keywords": [
+    "realtime-ai",
+    "voice-ai",
+    "agent-infrastructure",
+    "streaming-audio",
+    "barge-in",
+    "tts",
+    "stt",
+    "typescript",
+    "bun"
+  ],
+  "author": "Rob McElvenny",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

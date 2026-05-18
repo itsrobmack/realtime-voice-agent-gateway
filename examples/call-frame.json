@@ -1,0 +1,6 @@
+{
+  "sessionId": "example-session",
+  "sequence": 1,
+  "atMs": 20,
+  "payloadEncoding": "pcm16"
+}
