@@ -40,11 +40,9 @@ curl http://localhost:8788/evals
 
 ## Eval coverage
 
-The eval suite validates three runtime behaviors:
+The eval suite validates realtime voice runtime behavior: final transcript handling, streamed speech, user interruption, partial transcript boundaries, API health, and structured eval output.
 
-1. A final transcript creates an agent response and streamed speech.
-2. User barge in interrupts active speech.
-3. A partial transcript does not trigger an agent response.
+See [`docs/evals.md`](docs/evals.md) for the eval matrix, failure cases, and interview framing.
 
 Run it:
 
